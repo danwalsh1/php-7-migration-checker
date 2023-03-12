@@ -11,6 +11,8 @@ from rulesExceptionHandler import rule_exception_handler
 from rulesEvalParseError import rule_eval_parse_error
 from rulesEStrict import rule_e_strict
 from rulesIndirectVarPropMethods import rule_indirect_var_prop_methods
+from rulesList import rule_list
+from rulesList import rule_empty_list
 
 # ================================================================================
 # =================================== Settings ===================================
@@ -47,6 +49,8 @@ def log_warning(file_path, line_number, log_line, failed_rules):
         warning_log_file_open.write(failed_rule + "\n")
     warning_log_file_open.write("\n")
 
+def log_info(message):
+    info_log_file_open.write(message + "\n")
 
 def run_rules(file_path, line_number, rules_line):
     failed_rules = []
@@ -67,6 +71,14 @@ def run_rules(file_path, line_number, rules_line):
         print("Line failed [rule_indirect_var_prop_methods]: " + rules_line.strip())
         failed_rules.append("Code that uses right-to-left evaluation must be rewritten to explicitly use that evaluation order with curly braces")
 
+    if not rule_list(rules_line):
+        print("Line failed [rule_list]: " + rules_line.strip())
+        failed_rules.append("list() no longer assigns variables in reverse order")
+
+    if not rule_empty_list(rules_line):
+        print("Line failed [rule_empty_list]: " + rules_line.strip())
+        failed_rules.append("Empty list() assignments have been removed")
+
     # Has the line failed any rules?
     if len(failed_rules) > 0:
         log_warning(file_path, line_number, rules_line, failed_rules)
@@ -75,6 +87,15 @@ def run_rules(file_path, line_number, rules_line):
 # ================================================================================
 # ==================================== Checks ====================================
 # ================================================================================
+
+# Disclaimer for non-checked points
+log_info("Please note the following rules haven't been checked for:")
+log_info("Internal constructors now always throw exceptions on failure rather than sometimes returning null or an unusable object")
+log_info("list() can no longer unpack string variables")
+log_info("Array ordering when elements are automatically created during 'by reference' assignments has changed")
+log_info("Parentheses around function arguments no longer affect behaviour")
+log_info("")
+log_info("")
 
 # Create log directory
 current_log_directory = os.path.join(root_log_path, log_directory)
@@ -103,6 +124,7 @@ for root_directory in os.walk(root_check_path):
 
         if blacklisted == True:
             print("Skipping blacklisted directory: " + current_directory_name)
+            log_info("Skipping blacklisted directory: " + current_directory_name)
             continue
 
         print("Searching: " + current_directory_name)
@@ -110,6 +132,7 @@ for root_directory in os.walk(root_check_path):
             if not os.path.isdir(php_file_path):
                 # Check the file
                 print("PHP file found: " + php_file_path.name)
+                log_info("PHP file found: " + php_file_path.name)
 
                 # Go through the file line-by-line
                 current_file_path = php_file_path.absolute()
@@ -120,12 +143,9 @@ for root_directory in os.walk(root_check_path):
                         line_counter += 1
             else:
                 print("Skipping directory with PHP name: " + php_file_path.name)
+                log_info("Skipping directory with PHP name: " + php_file_path.name)
 
     break
-
-# Close logs
-warning_log_file_open.close()
-info_log_file_open.close()
 
 print("")
 print("")
@@ -137,3 +157,10 @@ print("")
 
 print("Please note the following rules haven't been checked for:")
 print("Internal constructors now always throw exceptions on failure rather than sometimes returning null or an unusable object")
+print("list() can no longer unpack string variables")
+print("Array ordering when elements are automatically created during 'by reference' assignments has changed")
+print("Parentheses around function arguments no longer affect behaviour")
+
+# Close logs
+warning_log_file_open.close()
+info_log_file_open.close()
